@@ -27,8 +27,9 @@ Aplikace očekávají běžící lokální databázi Neo4j.
 * **V souboru JupyterMusicPlayer.ipynb: V druhé buňce kódu upravte proměnné uri, user a password v metodě Neo4jConnection.**
 * **V souboru DataVisualiser.ipynb: V druhé buňce kódu upravte parametry metody Neo4jAnalytics.**
     
+### 3. Nastavení cesty k souborům
+* **V souboru JupyterMusicPlayer.ipynb: V poslední buňce vložte absolutně adresovanou cestu k vašim mp3 souborům do funkce start_app().**
 
-    
 
 
 
