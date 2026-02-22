@@ -24,8 +24,8 @@ pip install neo4j pygame mutagen pandas matplotlib seaborn pillow ipywidgets pla
 
 ### 2. Nastavení databáze
 Aplikace očekávají běžící lokální databázi Neo4j.
-
-    V souboru JupyterMusicPlayer.ipynb: V druhé buňce kódu upravte proměnné uri, user a password v metodě Neo4jConnection.
+* **V souboru JupyterMusicPlayer.ipynb: V druhé buňce kódu upravte proměnné uri, user a password v metodě Neo4jConnection.**
+    
 
     V souboru DataVisualiser.ipynb: V druhé buňce kódu upravte parametry metody Neo4jAnalytics.
 
