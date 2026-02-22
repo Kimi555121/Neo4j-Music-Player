@@ -30,10 +30,27 @@ Aplikace očekávají běžící lokální databázi Neo4j.
 ### 3. Nastavení cesty k souborům
 * **V souboru JupyterMusicPlayer.ipynb: V poslední buňce vložte absolutně adresovanou cestu k vašim mp3 souborům do funkce start_app().**
 
+## 🚀 Návod k použití
+
+### 1. Spuštění Desktopové Aplikace 
+```Bash
+python Neo4jMusicPlayer.py
+```
+
+### 2. Spuštění Jupyter Přehrávače 
+```Bash
+python -m notebook JupyterMusicPlayer.ipynb
+```
+
+### 3. Analýza dat 
+```Bash
+python -m notebook DataVisualizer.ipynb
+```
+### 4. Dokumentace schématu 
+```Bash
+python -m notebook PlantUMLdocumentation.ipynb
+```
+Autor: Martin Steinbach 
 
 
-
-### 1. Instalace knihoven
-Nainstalujte potřebné závislosti pomocí správce balíčků `pip`:
-### 1. Instalace knihoven
-Nainstalujte potřebné závislosti pomocí správce balíčků `pip`:
+***
