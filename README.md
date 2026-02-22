@@ -1,4 +1,3 @@
-# Neo4j-Music-Player
 # 🎵 Grafové doporučování hudby
 
 Tento projekt je praktickou součástí bakalářské práce. Jedná se o sadu aplikací, které demonstrují využití grafových algoritmů pro doporučování hudby. Řešení kombinuje grafovou databázi Neo4j s programovacím jazykem Python.
