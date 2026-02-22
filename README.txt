@@ -9,7 +9,7 @@ Projekt obsahuje 4 hlavní soubory:
 
 Požadavky a Instalace
 
-	Pro spuštění je nutné mít nainstalovaný Python 3.8+ a běžící instanci databáze Neo4j Desktop (verze 5.x).
+	Pro spuštění je nutné mít nainstalovaný Python 3.8+ a běžící instanci databáze Neo4j Desktop 2 (verze 5.x).
 
 	1. Instalace knihoven
 
@@ -50,5 +50,6 @@ Návod k použití
 	4. Dokumentace schématu
 		
 		python -m notebook PlantUMLdocumentation.ipynb
+
 
 Autor: Martin Steinbach
