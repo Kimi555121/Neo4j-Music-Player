@@ -211,44 +211,40 @@ class MusicRecommender:
         return self.conn.query(query, {"user_id": user_id, "limit": limit})
 
     def hybrid_recommendation(self, user_id, limit=10, alpha=0.6):
-        """
-        Hybridní doporučení s parametrem Alpha.
-        alpha = váha pro kolaborativní filtr (0.0 až 1.0)
-        (1 - alpha) = váha pro obsahový filtr
-        """
+        """Hybridní doporučení s parametrem Alpha"""
         query = """
-        // 1. Zjistíme preference uživatele
-        MATCH (u:User {userId: $user_id})-[:LISTENED_TO]->(t:Track)
-        WITH u, collect(t) as listened_tracks
+        // Najdeme samotného uživatele
+        MATCH (u:User {userId: $user_id})
 
-        MATCH (u)-[:LISTENED_TO]->(:Track)-[:BELONGS_TO]->(g:Genre)
+        // Zjistíme historii
+        OPTIONAL MATCH (u)-[:LISTENED_TO]->(t:Track)
+        WITH u, collect(DISTINCT t) as listened_tracks
+
+        // Zjistíme oblíbené žánry
+        OPTIONAL MATCH (u)-[:LISTENED_TO]->(:Track)-[:BELONGS_TO]->(g:Genre)
         WITH u, listened_tracks, collect(DISTINCT g) as user_genres
 
-        // 2. Najdeme podobné uživatele (peer group)
-        MATCH (u)-[:LISTENED_TO]->(t_common:Track)<-[:LISTENED_TO]-(other:User)
-        WITH u, listened_tracks, user_genres, collect(DISTINCT other) as peer_group
+        // Najdeme podobné uživatele
+        OPTIONAL MATCH (u)-[:LISTENED_TO]->(:Track)<-[:LISTENED_TO]-(other:User)
+        WITH listened_tracks, user_genres, collect(DISTINCT other) as peer_group
 
-        // 3. Hledáme kandidáty (neslyšené skladby)
+        // Hledáme kandidáty
         MATCH (rec:Track)
         WHERE NOT rec IN listened_tracks
 
-        // 4. Výpočet dílčích skóre
-
-        // A) Kolaborativní skóre (S_collab)
+        // Výpočet dílčích skóre
+        
+        // Kolaborativní skóre (S_collab)
         OPTIONAL MATCH (rec)<-[:LISTENED_TO]-(peer)
         WHERE peer IN peer_group
-        WITH rec, user_genres, count(peer) as raw_collab_score
+        WITH rec, user_genres, count(DISTINCT peer) as raw_collab_score
 
-        // B) Obsahové skóre (S_content)
+        // Obsahové skóre (S_content)
         OPTIONAL MATCH (rec)-[:BELONGS_TO]->(rg:Genre)
         WITH rec, raw_collab_score,
              CASE WHEN rg IN user_genres THEN 1.0 ELSE 0.0 END as content_score
 
-        // 5. Normalizace a Finální výpočet
-        // POZOR: raw_collab_score může být např. 5 nebo 10. content_score je max 1.
-        // Aby vzorec fungoval správně, je dobré collab_score 'zploštit' nebo omezit,
-        // ale pro jednoduchost zde použijeme raw hodnotu.
-
+        // Normalizace a Finální výpočet
         WITH rec,
              (raw_collab_score * $alpha) + (content_score * (1.0 - $alpha)) as final_score
 
@@ -256,7 +252,7 @@ class MusicRecommender:
         ORDER BY final_score DESC
         LIMIT $limit
 
-        // 6. Vrácení výsledků
+        // Vrácení výsledků
         MATCH (rec)-[:IS_PERFORMED_BY]->(a:Artist)
         OPTIONAL MATCH (rec)-[:BELONGS_TO]->(g:Genre)
         RETURN rec.trackId as trackId, rec.title as title,
@@ -266,7 +262,7 @@ class MusicRecommender:
         return self.conn.query(query, {
             "user_id": user_id,
             "limit": limit,
-            "alpha": alpha  # Předáváme alfu jako parametr
+            "alpha": alpha
         })
 
     def record_listen(self, user_id, track_id, listen_duration, listen_date):
@@ -297,11 +293,11 @@ class MusicRecommender:
         query = """
         MATCH (a:Artist {artistId: $artist_id})
 
-        // 1. Zjistit počet fanoušků
+        // Zjistit počet fanoušků
         OPTIONAL MATCH (fan:User)-[:IS_A_FAN_OF]->(a)
         WITH a, count(fan) as total_fans, collect(fan.name) as fan_names
 
-        // 2. Zjistit, co tato komunita poslouchá JINÉHO (nejčastěji)
+        // Zjistit, co tato komunita poslouchá JINÉHO (nejčastěji)
         // Najdi fanoušky -> jejich poslechy -> jiné umělce
         OPTIONAL MATCH (community_member:User)-[:IS_A_FAN_OF]->(a)
         MATCH (community_member)-[:LISTENED_TO]->(:Track)-[:IS_PERFORMED_BY]->(other_artist:Artist)
@@ -628,19 +624,18 @@ class MusicPlayerApp:
         left_frame = tk.Frame(content_frame, bg="#2d2d2d")
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
 
-        # --- NOVÉ: NOW PLAYING PANEL ---
+        # Now playing panel
         now_playing_frame = tk.Frame(left_frame, bg="#252525", bd=2, relief=tk.GROOVE)
         now_playing_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        # 1. Obrázek alba (vlevo v panelu)
-        # Defaultní prázdný obrázek při startu
+        # Obrázek alba
         default_img = Image.new('RGB', (150, 150), color='#1e1e1e')
         self.album_art_image = ImageTk.PhotoImage(default_img)
 
         self.art_label = tk.Label(now_playing_frame, image=self.album_art_image, bg="#252525")
         self.art_label.pack(side=tk.LEFT, padx=10, pady=10)
 
-        # 2. Informace o skladbě (vpravo od obrázku)
+        # Informace o skladbě (vpravo od obrázku)
         info_frame = tk.Frame(now_playing_frame, bg="#252525")
         info_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -652,11 +647,11 @@ class MusicPlayerApp:
                                    bg="#252525", fg="#aaaaaa", anchor="w")
         self.lbl_artist.pack(fill=tk.X)
 
-        # --- NOVÉ: PROGRESS BAR A ČAS ---
+        # Progress bar a čas
         progress_frame = tk.Frame(info_frame, bg="#252525")
         progress_frame.pack(fill=tk.X, pady=(10, 5))
 
-        # Čas vlevo (0:00)
+        # Čas vlevo
         self.lbl_current_time = tk.Label(progress_frame, text="0:00",
                                          bg="#252525", fg="#aaaaaa", font=("Arial", 9))
         self.lbl_current_time.pack(side=tk.LEFT)
@@ -666,12 +661,12 @@ class MusicPlayerApp:
                                             mode="determinate", length=200)
         self.progress_bar.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
 
-        # Čas vpravo (Celková délka)
+        # Čas vpravo
         self.lbl_total_time = tk.Label(progress_frame, text="0:00",
                                        bg="#252525", fg="#aaaaaa", font=("Arial", 9))
         self.lbl_total_time.pack(side=tk.RIGHT)
 
-        # --- OVLÁDACÍ TLAČÍTKA (PŘESUNUTA SEM) ---
+        # Ovládací tlačítka
         control_frame = tk.Frame(info_frame, bg="#252525")
         control_frame.pack(fill=tk.X, pady=15, anchor="w")
 
@@ -691,7 +686,7 @@ class MusicPlayerApp:
         tk.Button(control_frame, text="👥", command=self.open_fan_zone,
                   bg="#673AB7", fg="white", font=("Arial", 10)).pack(side=tk.LEFT)
 
-        # --- SEZNAM SKLADEB (ZŮSTÁVÁ DOLE) ---
+        # Seznam skladeb
         tk.Label(left_frame, text="📚 Knihovna", font=("Arial", 10, "bold"),
                  bg="#2d2d2d", fg="#aaaaaa").pack(anchor="w", padx=5)
 
@@ -768,7 +763,6 @@ class MusicPlayerApp:
                 self.lbl_current_time.config(text=self.format_time(self.current_time_played))
 
         # Naplánování dalšího spuštění za 1000 ms (1 sekunda)
-        # Uložíme si ID, abychom to mohli případně zrušit
         self.timer_loop_id = self.root.after(1000, self.update_progress_loop)
 
     def format_time(self, seconds):
@@ -793,16 +787,16 @@ class MusicPlayerApp:
         success, msg = self.player.play(track['filePath'], track['trackId'], track['artistId'])
 
         if success:
-            # 1. Aktualizace textů
+            # Aktualizace textů
             self.lbl_title.config(text=track['title'])
             self.lbl_artist.config(text=track['artist'])
 
-            # 2. Načtení a aktualizace obrázku alba
+            # Načtení a aktualizace obrázku alba
             new_art = self.get_album_art(track['filePath'])
             self.art_label.configure(image=new_art)
             self.art_label.image = new_art  # DŮLEŽITÉ: Udržet referenci, jinak zmizí!
 
-            # 3. Aktualizace tlačítka oblíbených (z předchozího kroku)
+            # Aktualizace tlačítka oblíbených (z předchozího kroku)
             if self.current_user:
                 is_fan = self.recommender.get_user_fan_status(
                     self.current_user['userId'],
@@ -810,7 +804,7 @@ class MusicPlayerApp:
                 )
                 self.update_favorite_button_visuals(is_fan)
 
-            # --- NOVÉ: Nastavení progress baru ---
+            # Nastavení progress baru
             self.current_track_duration = track['duration']
             self.current_time_played = 0
 
@@ -836,7 +830,7 @@ class MusicPlayerApp:
         msg = self.player.stop()
         self.status_label.config(text=msg, fg="#f44336")
 
-        # --- NOVÉ: Zastavení progress baru ---
+        # Zastavení progress baru
         if self.timer_loop_id:
             self.root.after_cancel(self.timer_loop_id)
             self.timer_loop_id = None
@@ -854,16 +848,16 @@ class MusicPlayerApp:
         user_id = self.current_user['userId']
         artist_id = self.player.current_artist_id
 
-        # 1. Zjistit aktuální stav
+        # Zjistit aktuální stav
         is_fan = self.recommender.get_user_fan_status(user_id, artist_id)
 
         if is_fan:
-            # 2a. Pokud je fanoušek -> Odebrat
+            # Pokud je fanoušek -> Odebrat
             self.recommender.remove_fan_relationship(user_id, artist_id)
             self.update_favorite_button_visuals(False)  # Změnit vzhled na "Nejsem fanoušek"
             messagebox.showinfo("Info", "Umělec odebrán z oblíbených.")
         else:
-            # 2b. Pokud není fanoušek -> Přidat
+            # Pokud není fanoušek -> Přidat
             self.recommender.add_fan_relationship(user_id, artist_id)
             self.update_favorite_button_visuals(True)  # Změnit vzhled na "Jsem fanoušek"
             messagebox.showinfo("Info", "Umělec přidán do oblíbených!")
@@ -976,18 +970,18 @@ class MusicPlayerApp:
 
         # --- UI Komponenty ---
 
-        # 1. Hlavička
+        # Hlavička
         tk.Label(fan_window, text=f"Komunita fanoušků",
                  font=("Arial", 16, "bold"), bg="#2d2d2d", fg="#ffffff").pack(pady=10)
 
-        # 2. Status uživatele (Členství)
+        # Status uživatele (Členství)
         status_color = "#4CAF50" if is_member else "#757575"
         status_text = "JSI ČLENEM SKUPINY ✅" if is_member else "NEJSI ČLENEM ❌"
 
         tk.Label(fan_window, text=status_text, font=("Arial", 12, "bold"),
                  bg="#2d2d2d", fg=status_color).pack(pady=5)
 
-        # 3. Statistiky
+        # Statistiky
         stat_frame = tk.Frame(fan_window, bg="#3d3d3d", padx=10, pady=10)
         stat_frame.pack(fill=tk.X, padx=20, pady=10)
 
@@ -1003,7 +997,7 @@ class MusicPlayerApp:
         tk.Label(stat_frame, text=f"Členové: {names_str}",
                  bg="#3d3d3d", fg="#aaaaaa", font=("Arial", 10)).pack(anchor="w", pady=5)
 
-        # 4. Co komunita doporučuje (Analýza grafu)
+        # Co komunita doporučuje (Analýza grafu)
         tk.Label(fan_window, text="Tato komunita také miluje:",
                  font=("Arial", 12, "bold"), bg="#2d2d2d", fg="#ffffff").pack(pady=(20, 10))
 
