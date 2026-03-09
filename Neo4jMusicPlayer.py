@@ -890,9 +890,18 @@ class MusicPlayerApp:
 
             if recs:
                 for rec in recs:
-                    display_text = f"{rec['title']} - {rec['artist']}"
-                    # if rec.get('genre'):
-                    #     display_text += f" ({rec['genre']})"
+                    # Získání skóre
+                    raw_score = rec.get('score', rec.get('popularity', 0))
+
+                    # Formátování skóre
+                    if isinstance(raw_score, float):
+                        score_display = f"{raw_score:.2f}"
+                    else:
+                        score_display = str(raw_score)
+
+                    # Přidání skóre na začátek textu
+                    display_text = f"Skóre: [{score_display}] {rec['title']} - {rec['artist']}"
+
                     self.rec_listbox.insert(tk.END, display_text)
             else:
                 self.rec_listbox.insert(tk.END, "Zatím nemám dostatek dat pro doporučení")
