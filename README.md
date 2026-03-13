@@ -19,7 +19,7 @@ Pro spuštění je nutné mít nainstalovaný **Python 3.8+** a běžící insta
 Nainstalujte potřebné závislosti pomocí správce balíčků `pip`:
 
 ```bash
-pip install neo4j pygame mutagen pandas matplotlib seaborn pillow ipywidgets plantuml
+pip install neo4j pygame mutagen pandas matplotlib seaborn pillow ipywidgets plantuml notebook jupyter
 ```
 
 ### 2. Nastavení databáze
