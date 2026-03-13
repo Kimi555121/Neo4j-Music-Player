@@ -44,7 +44,7 @@ python -m notebook JupyterMusicPlayer.ipynb
 
 ### 3. Analýza dat 
 ```Bash
-python -m notebook DataVisualizer.ipynb
+python -m notebook DataVisualiser.ipynb
 ```
 ### 4. Dokumentace schématu 
 ```Bash
